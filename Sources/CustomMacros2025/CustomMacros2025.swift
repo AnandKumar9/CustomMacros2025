@@ -9,3 +9,13 @@
 /// produces a tuple `(x + y, "x + y")`.
 @freestanding(expression)
 public macro stringify<T>(_ value: T) -> (T, String) = #externalMacro(module: "CustomMacros2025Macros", type: "StringifyMacro")
+
+@freestanding(expression)
+public macro superStringify<T>(_ value: T) -> (T, String) = #externalMacro(module: "CustomMacros2025Macros", type: "SuperStringifyMacro")
+
+//@attached(member, names: named(CodingKeys))
+//@attached(extension)
+//public macro AutoCodable() = #externalMacro(
+//    module: "AutoCodableMacros",
+//    type: "AutoCodableMacro"
+//)
