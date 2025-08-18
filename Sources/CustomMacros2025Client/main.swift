@@ -51,7 +51,7 @@ extension SampleExperiment : ExperimentProtocol {}
 enum MusicBand {
     case on
     case off
-    case theRollingStones(preferredMember: String, song: String)
-    case ledZeppelin(preferredMember: String, song: String)
+    case TheRollingStones(preferredMember: String, song: String)
+    case LedZeppelin(preferredMember: String, song: String)
 }
 

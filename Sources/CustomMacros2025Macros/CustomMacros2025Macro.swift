@@ -151,9 +151,19 @@ public struct ConsumableExperimentMacro: MemberMacro {
             \(casesBody)
         }
         """
+        
+        // Static function we inject on the host enum (stub as requested).
+        let staticFuncSource =
+        """
+        static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
+            return nil
+        }
+        """
 
-        let nestedEnum: DeclSyntax = DeclSyntax(stringLiteral: nestedEnumSource)
-        return [nestedEnum]
+        let nestedEnumDecl: DeclSyntax = DeclSyntax(stringLiteral: nestedEnumSource)
+        let staticFuncDecl: DeclSyntax = DeclSyntax(stringLiteral: staticFuncSource)
+
+        return [nestedEnumDecl, staticFuncDecl]
     }
 }
 
