@@ -15,6 +15,9 @@ enum FeatureXExperiment {
     case off
     case variationA(headerMessage: String)
     case variationB(headerMessage: String)
+}
+
+extension FeatureXExperiment : ExperimentProtocol {
     
     enum ConsumableExperiment: ConsumableExperimentProtocol {
         case variationA(headerMessage: String)
@@ -25,8 +28,6 @@ enum FeatureXExperiment {
         return ConsumableExperiment.variationA(headerMessage: variables["headerMessage"]!)
     }
 }
-
-extension FeatureXExperiment : ExperimentProtocol {}
 
 struct FeatureFlag {
     let key = "FeatureX.Flag1"

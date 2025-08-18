@@ -15,7 +15,7 @@ public macro superStringify<T>(_ value: T) -> (T, String) = #externalMacro(modul
 
 @attached(member, names: named(CodingKeys))
 @attached(extension, conformances: Codable)
-public macro AutoCodable() = #externalMacro(
-    module: "CustomMacros2025Macros",
-    type: "AutoCodableMacro"
-)
+public macro AutoCodable() = #externalMacro(module: "CustomMacros2025Macros", type: "AutoCodableMacro")
+
+@attached(member, names: named(ConsumableExperiment))
+public macro ConsumableExperiment() = #externalMacro(module: "CustomMacros2025Macros", type: "ConsumableExperimentMacro")

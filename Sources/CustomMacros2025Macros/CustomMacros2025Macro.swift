@@ -111,11 +111,58 @@ public struct AutoCodableMacro: MemberMacro, ExtensionMacro {
   }
 }
 
+public struct ConsumableExperimentMacro: MemberMacro {
+    public static func expansion(of attribute: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in context: some MacroExpansionContext) throws -> [DeclSyntax] {
+
+        // We only support enums.
+        guard let enumDecl = decl.as(EnumDeclSyntax.self) else { return [] }
+
+        // Collect retained cases: everything except `on` and `off`,
+        // preserving associated value parameter lists as-is.
+        var retainedCaseLines: [String] = []
+
+        for member in enumDecl.memberBlock.members {
+            guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else { continue }
+
+            for element in caseDecl.elements {
+                let name = element.name.text
+                if name == "on" || name == "off" {
+                    continue
+                }
+
+                if let params = element.parameterClause {
+                    // Reuse the original parameter clause text verbatim
+                    retainedCaseLines.append("case \(name)\(params.description)")
+                } else {
+                    retainedCaseLines.append("case \(name)")
+                }
+            }
+        }
+
+        // If nothing to retain, still generate an empty enum conforming to the protocol.
+        // (You can also choose to return [] if you prefer to inject nothing.)
+        let casesBody = retainedCaseLines.joined(separator: "\n")
+
+        // Build the nested enum:
+        //   enum ConsumableExperiment: ConsumableExperimentProtocol { ... }
+        let nestedEnumSource =
+        """
+        enum ConsumableExperiment: ConsumableExperimentProtocol {
+            \(casesBody)
+        }
+        """
+
+        let nestedEnum: DeclSyntax = DeclSyntax(stringLiteral: nestedEnumSource)
+        return [nestedEnum]
+    }
+}
+
 @main
 struct CustomMacros2025Plugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         StringifyMacro.self,
         SuperStringifyMacro.self,
-        AutoCodableMacro.self
+        AutoCodableMacro.self,
+        ConsumableExperimentMacro.self
     ]
 }

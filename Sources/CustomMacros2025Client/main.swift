@@ -22,3 +22,36 @@ print(User.CodingKeys.id)
 
 let variation = FeatureFlag().getVariation(expressedBasedOn: FeatureXExperiment.self) as! FeatureXExperiment.ConsumableExperiment
 print(variation)
+
+/*
+The attached macro should
+ 1. Create a nested enum skipping the cases `on` and `off`, but retaining every other case. Declare a conformance to ConsumableExperimentProtocol.
+ 2. Add the static function getVariation(), along with the implementation
+ */
+
+enum SampleExperiment {
+    case on
+    case off
+    case variationA(headerMessage: String)
+    case variationB(headerMessage: String)
+    
+    enum ConsumableExperiment: ConsumableExperimentProtocol {
+        case variationA(headerMessage: String)
+        case variationB(headerMessage: String)
+    }
+    
+    static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
+        return ConsumableExperiment.variationA(headerMessage: variables["headerMessage"]!)
+    }
+}
+
+extension SampleExperiment : ExperimentProtocol {}
+
+@ConsumableExperiment
+enum MusicBand {
+    case on
+    case off
+    case theRollingStones(preferredMember: String, song: String)
+    case ledZeppelin(preferredMember: String, song: String)
+}
+
