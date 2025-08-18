@@ -62,11 +62,62 @@ public struct SuperStringifyMacro: ExpressionMacro {
     }
 }
 
+public struct AutoCodableMacro: MemberMacro, ExtensionMacro {
+
+  // Inject the CodingKeys enum as a member
+  public static func expansion(of node: AttributeSyntax,
+                               providingMembersOf decl: some DeclGroupSyntax,
+                               in context: some MacroExpansionContext) throws -> [DeclSyntax] {
+
+    let storedNames: [String] = decl.memberBlock.members.compactMap { member in
+        
+      guard let varDecl = member.decl.as(VariableDeclSyntax.self) else { return nil }
+        
+      if varDecl.modifiers.contains(where: { $0.name.tokenKind == .keyword(.static) }) == true {
+        return nil
+      }
+        
+      guard let binding = varDecl.bindings.first,
+            binding.accessorBlock == nil,
+            let ident = binding.pattern.as(IdentifierPatternSyntax.self)?.identifier.text
+      else { return nil }
+      
+        return ident
+    }
+
+    let cases = storedNames.map { "case \($0)" }.joined(separator: "\n    ")
+      
+    let codingKeysEnum: DeclSyntax = """
+    enum CodingKeys: String, CodingKey {
+        \(raw: cases)
+    }
+    """
+    return [codingKeysEnum]
+  }
+
+  // Provide the `: Codable` via an extension macro
+  public static func expansion(
+    of node: AttributeSyntax,
+    attachedTo declaration: some DeclGroupSyntax,
+    providingExtensionsOf type: some TypeSyntaxProtocol,
+    conformingTo protocols: [TypeSyntax],
+    in context: some MacroExpansionContext
+  ) throws -> [ExtensionDeclSyntax] {
+
+    // Empty extension that adds conformance
+    let declSyntax: DeclSyntax = """
+    extension \(type): Codable {}
+    """
+    guard let ext = declSyntax.as(ExtensionDeclSyntax.self) else { return [] }
+    return [ext]
+  }
+}
+
 @main
 struct CustomMacros2025Plugin: CompilerPlugin {
     let providingMacros: [Macro.Type] = [
         StringifyMacro.self,
         SuperStringifyMacro.self,
-//        AutoCodableMacro.self
+        AutoCodableMacro.self
     ]
 }
