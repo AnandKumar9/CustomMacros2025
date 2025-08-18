@@ -20,14 +20,5 @@ struct User {
 let userA = User(id: 1, name: "Mark", nickname: "Junior")
 print(User.CodingKeys.id)
 
-enum Experiment {
-    case on
-    case off
-    case variationA
-    case variationB
-    
-    enum ExperimentToUse {
-        case variationA
-        case variationB
-    }
-}
+let variation = FeatureFlag().getVariation(expressedBasedOn: FeatureXExperiment.self) as! FeatureXExperiment.ConsumableExperiment
+print(variation)

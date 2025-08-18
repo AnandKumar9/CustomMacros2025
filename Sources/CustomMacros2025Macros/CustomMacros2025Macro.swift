@@ -96,13 +96,11 @@ public struct AutoCodableMacro: MemberMacro, ExtensionMacro {
   }
 
   // Provide the `: Codable` via an extension macro
-  public static func expansion(
-    of node: AttributeSyntax,
-    attachedTo declaration: some DeclGroupSyntax,
-    providingExtensionsOf type: some TypeSyntaxProtocol,
-    conformingTo protocols: [TypeSyntax],
-    in context: some MacroExpansionContext
-  ) throws -> [ExtensionDeclSyntax] {
+  public static func expansion(of node: AttributeSyntax,
+                               attachedTo declaration: some DeclGroupSyntax,
+                               providingExtensionsOf type: some TypeSyntaxProtocol,
+                               conformingTo protocols: [TypeSyntax],
+                               in context: some MacroExpansionContext) throws -> [ExtensionDeclSyntax] {
 
     // Empty extension that adds conformance
     let declSyntax: DeclSyntax = """
