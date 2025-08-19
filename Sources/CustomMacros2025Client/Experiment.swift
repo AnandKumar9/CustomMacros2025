@@ -18,6 +18,7 @@ enum FeatureXExperiment: ExperimentProtocol {
     case off
     case variationA(headerMessage: String)
     case variationB(headerMessage: String)
+    case variationC
 }
 
 @ConsumableExperiment

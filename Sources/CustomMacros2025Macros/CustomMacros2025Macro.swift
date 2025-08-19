@@ -111,61 +111,47 @@ public struct AutoCodableMacro: MemberMacro, ExtensionMacro {
   }
 }
 
-struct AssocParam {
-  let label: String?     // external label if present (enum associated values use this label)
-  let type: String       // source text of the type
-  let isLabeled: Bool
-}
-struct RetainedCase {
-  let name: String
-  let assocParams: [AssocParam]
-  let originalClauseText: String? // for the nested enum case syntax
-}
-
 public struct ConsumableExperimentMacro: MemberMacro {
     public static func expansion(of attribute: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in context: some MacroExpansionContext) throws -> [DeclSyntax] {
 
-        // We only support enums.
+        // Support only enums
         guard let enumDecl = decl.as(EnumDeclSyntax.self) else { return [] }
 
-        // Collect retained cases: everything except `on` and `off`,
-        // preserving associated value parameter lists as-is.
+        // MARK: STEP 1 - Iterate through all the existing cases in the enum
+        // Collect the full expression for all the cases that need to be retained. Cases `.on` and `.off` will be filtered out.
         var retainedCaseLines: [String] = []
 
         for member in enumDecl.memberBlock.members {
             guard let caseDecl = member.decl.as(EnumCaseDeclSyntax.self) else { continue }
 
             for element in caseDecl.elements {
-                let name = element.name.text
+                let caseName = element.name.text
                 
-                if ((name.caseInsensitiveCompare("on") == .orderedSame) || (name.caseInsensitiveCompare("off") == .orderedSame)) {
-//                if name == "on" || name == "off" {
+                guard ((caseName.caseInsensitiveCompare("on") != .orderedSame) && (caseName.caseInsensitiveCompare("off") != .orderedSame)) else {
                     continue
                 }
 
-                if let params = element.parameterClause {
-                    // Reuse the original parameter clause text verbatim
-                    retainedCaseLines.append("case \(name)\(params.description)")
-                } else {
-                    retainedCaseLines.append("case \(name)")
-                }
+                let caseParameters = element.parameterClause?.description ?? ""
+                
+                retainedCaseLines.append("case \(caseName)\(caseParameters)")
             }
         }
 
-        // If nothing to retain, still generate an empty enum conforming to the protocol.
-        // (You can also choose to return [] if you prefer to inject nothing.)
-        let casesBody = retainedCaseLines.joined(separator: "\n")
+        // MARK: STEP 2 - Build the nested enum conforming to `ConsumableExperimentProtocol` protocol
+        // If there were no cases to retain, generate an empty enum still.
+        let nestedEnumCasesSource = retainedCaseLines.joined(separator: "\n")
 
-        // Build the nested enum:
-        //   enum ConsumableExperiment: ConsumableExperimentProtocol { ... }
-        let nestedEnumSource =
+        let nestedEnumFullSource =
         """
         enum ConsumableExperiment: ConsumableExperimentProtocol {
-            \(casesBody)
+            \(nestedEnumCasesSource)
         }
         """
         
-        let allCases: [(caseName: String, associatedVariables: [String])] = retainedCaseLines.compactMap { caseLine in
+        // MARK: STEP 3 - Build the getVariation() static function that returns a mapped instance of the nested enum
+        // (NOTE/TODO - This part of the code can be optimized to reuse the parsing done already.)
+        
+        let allCasesNestedEnum: [(caseName: String, associatedVariables: [String])] = retainedCaseLines.compactMap { caseLine in
             let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
             let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
             
@@ -185,8 +171,8 @@ public struct ConsumableExperimentMacro: MemberMacro {
             return (caseName: caseName, associatedVariables: arguments)
         }
         
-        var longCodeSnippet: String = ""
-        for (index, caseDetails) in allCases.enumerated() {
+        var staticFuncDefinitionSource: String = ""
+        for (index, caseDetails) in allCasesNestedEnum.enumerated() {
             let elsePrefixIfNeeded = (index > 0) ? "else ":""
             
             let associatedVariablesArray: [String] = caseDetails.associatedVariables.map { associatedVariable in
@@ -200,26 +186,23 @@ public struct ConsumableExperimentMacro: MemberMacro {
             let caseToBeReturned = "ConsumableExperiment.\(caseDetails.caseName)" + associatedVariablesFullSnippet
             print(caseToBeReturned)
             
-//            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseDetails.caseName)\" { return \(caseToBeReturned) }\n")
-            longCodeSnippet.append("\(elsePrefixIfNeeded)if (variationName.caseInsensitiveCompare(\"\(caseDetails.caseName)\") == .orderedSame) { return \(caseToBeReturned) }\n")
+            staticFuncDefinitionSource.append("\(elsePrefixIfNeeded)if (variationName.caseInsensitiveCompare(\"\(caseDetails.caseName)\") == .orderedSame) { return \(caseToBeReturned) }\n")
         }
-        longCodeSnippet.append((allCases.count > 0) ? "else {return nil}" : "return nil")
+        staticFuncDefinitionSource.append((allCasesNestedEnum.count > 0) ? "else {return nil}" : "return nil")
         
-        // Static function we inject on the host enum (stub as requested).
-        let staticFuncSource =
+        let staticFuncFullSource =
         """
         static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-            // Use this for debugging - \(retainedCaseLines)
-            \(longCodeSnippet)
+            // Use this comment for debugging - \(retainedCaseLines)
+            \(staticFuncDefinitionSource)
         }
         """
 
-        let nestedEnumDecl: DeclSyntax = DeclSyntax(stringLiteral: nestedEnumSource)
-        let staticFuncDecl: DeclSyntax = DeclSyntax(stringLiteral: staticFuncSource)
+        let nestedEnumDecl: DeclSyntax = DeclSyntax(stringLiteral: nestedEnumFullSource)
+        let staticFuncDecl: DeclSyntax = DeclSyntax(stringLiteral: staticFuncFullSource)
 
         return [nestedEnumDecl, staticFuncDecl]
-    }
-    
+    }    
 }
 
 @main
