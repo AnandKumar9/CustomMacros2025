@@ -58,48 +58,79 @@ enum SampleExperiment {
     static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
         print("Inside")
         
-        let allCaseNames: [String] = SampleExperiment.retainedCaseLines.compactMap { caseLine in
+//        let allCaseNames: [String] = SampleExperiment.retainedCaseLines.compactMap { caseLine in
+//            let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
+//            let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
+//            
+//            return caseName
+//        }
+//        print(allCaseNames)
+        
+        let allCases: [(caseName: String, associatedVariables: [String])] = SampleExperiment.retainedCaseLines.compactMap { caseLine in
             let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
             let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
             
-            return caseName
+            guard let caseName else { return nil }
+            
+            var argumentsBlob: String? = nil
+            
+            if let start = caseLine.firstIndex(of: "("),
+               let end = caseLine.firstIndex(of: ")") {
+                argumentsBlob = String(caseLine[caseLine.index(after: start)..<end])
+            }
+            
+            guard let argumentsBlob else { return (caseName: caseName, associatedVariables: []) }
+            
+            let arguments: [String] = argumentsBlob.split(separator: ",").compactMap { ($0.split(separator: ":").first) }.map { String($0) }
+            
+            return (caseName: caseName, associatedVariables: arguments)
         }
-        print(allCaseNames)
         
         var longCodeSnippet: String = ""
-        for (index, caseName) in allCaseNames.enumerated() {
+        for (index, caseDetails) in allCases.enumerated() {
             let elsePrefixIfNeeded = (index > 0) ? "else ":""
-            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseName)\" { return nil }\n")
+            
+            let associatedVariablesArray: [String] = caseDetails.associatedVariables.map { associatedVariable in
+                return "\(associatedVariable): (variables[\"\(associatedVariable)\"] ?? \"\")"
+            }
+            let associatedVariablesString = associatedVariablesArray.joined(separator: ", ")
+            let associatedVariablesFullSnippet = (!associatedVariablesString.isEmpty) ? "(\(associatedVariablesString))" : ""
+            
+
+            let caseToBeReturned = " ConsumableExperiment.\(caseDetails.caseName)" + associatedVariablesFullSnippet
+            print(caseToBeReturned)
+            
+            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseDetails.caseName)\" { return \(caseToBeReturned) }\n")
         }
-        longCodeSnippet.append((allCaseNames.count > 0) ? "else \nreturn nil" : "return nil")
+        longCodeSnippet.append((allCases.count > 0) ? "else \n{return nil}" : "return nil")
         print(longCodeSnippet)
         
-        let matchingCaseLine: String = SampleExperiment.retainedCaseLines.first(where: { $0.hasPrefix("case \(variationName)")})!
-        print(matchingCaseLine)
         
-        var argumentsBlob: String? = nil
+//        return ConsumableExperiment.TheRollingStones(preferredMember: (variables["preferredMember"] ?? ""), song: (variables["song"] ?? ""))
         
-        if let start = matchingCaseLine.firstIndex(of: "("),
-           let end = matchingCaseLine.firstIndex(of: ")") {
-            argumentsBlob = String(matchingCaseLine[matchingCaseLine.index(after: start)..<end])
-        }
         
-        print("argumentsBlob - \(argumentsBlob!)")
-        let arguments = argumentsBlob!.split(separator: ",").flatMap { $0.split(separator: ":").first }
-        print(arguments)
-        let associatedDataChunks: [String] = arguments.compactMap { argument in
-            guard let value = variables[String(argument)] else { return nil }
-            return argument + ": \"" +  value + "\""
-        }
-        let associatedDataSnippet = associatedDataChunks.joined(separator: ", ")
-        print("associatedDataSnippet - \(associatedDataSnippet)")
-        
-//        let associatedDataSnippet = arguments.reduce("") { result, argument in
-//            
+//        let matchingCaseLine: String = SampleExperiment.retainedCaseLines.first(where: { $0.hasPrefix("case \(variationName)")})!
+//        print(matchingCaseLine)
+//        
+//        var argumentsBlob: String? = nil
+//        
+//        if let start = matchingCaseLine.firstIndex(of: "("),
+//           let end = matchingCaseLine.firstIndex(of: ")") {
+//            argumentsBlob = String(matchingCaseLine[matchingCaseLine.index(after: start)..<end])
 //        }
-        
-        let token = variationName + "(" + associatedDataSnippet + ")" // "\(variationName)\(\(associatedDataSnippet)\)"
-        print(token)
+//        
+//        print("argumentsBlob - \(argumentsBlob!)")
+//        let arguments = argumentsBlob!.split(separator: ",").flatMap { $0.split(separator: ":").first }
+//        print(arguments)
+//        let associatedDataChunks: [String] = arguments.compactMap { argument in
+//            guard let value = variables[String(argument)] else { return nil }
+//            return argument + ": \"" +  value + "\""
+//        }
+//        let associatedDataSnippet = associatedDataChunks.joined(separator: ", ")
+//        print("associatedDataSnippet - \(associatedDataSnippet)")
+//        
+//        let token = variationName + "(" + associatedDataSnippet + ")" // "\(variationName)\(\(associatedDataSnippet)\)"
+//        print(token)
         
         
         return ConsumableExperiment.variationA(headerMessage: variables["headerMessage"]!)
@@ -117,7 +148,7 @@ enum MusicBand {
     
     static func test_getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
         if variationName == "TheRollingStones" {
-            return nil
+            return ConsumableExperiment.TheRollingStones(preferredMember: (variables["preferredMember"] ?? ""), song: (variables["song"] ?? ""))
         } else if variationName == "LedZeppelin" {
             return nil
         }
