@@ -111,6 +111,17 @@ public struct AutoCodableMacro: MemberMacro, ExtensionMacro {
   }
 }
 
+struct AssocParam {
+  let label: String?     // external label if present (enum associated values use this label)
+  let type: String       // source text of the type
+  let isLabeled: Bool
+}
+struct RetainedCase {
+  let name: String
+  let assocParams: [AssocParam]
+  let originalClauseText: String? // for the nested enum case syntax
+}
+
 public struct ConsumableExperimentMacro: MemberMacro {
     public static func expansion(of attribute: AttributeSyntax, providingMembersOf decl: some DeclGroupSyntax, in context: some MacroExpansionContext) throws -> [DeclSyntax] {
 
@@ -152,11 +163,27 @@ public struct ConsumableExperimentMacro: MemberMacro {
         }
         """
         
+        let allCaseNames: [String] = retainedCaseLines.compactMap { caseLine in
+            let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
+            let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
+            
+            return caseName
+        }
+        print(allCaseNames)
+        
+        var longCodeSnippet: String = ""
+        for (index, caseName) in allCaseNames.enumerated() {
+            let elsePrefixIfNeeded = (index > 0) ? "else ":""
+            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseName)\" { return nil }\n")
+        }
+        longCodeSnippet.append((allCaseNames.count > 0) ? "else { return nil }" : "return nil")
+        
         // Static function we inject on the host enum (stub as requested).
         let staticFuncSource =
         """
         static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-            return nil
+            // Hi there - \(retainedCaseLines)
+            \(longCodeSnippet)
         }
         """
 
@@ -165,6 +192,7 @@ public struct ConsumableExperimentMacro: MemberMacro {
 
         return [nestedEnumDecl, staticFuncDecl]
     }
+    
 }
 
 @main
