@@ -25,7 +25,7 @@ enum FTUXMusicBandGreeting: ExperimentProtocol {
     case on
     case off
     case theRollingStones(preferredMember: String, song: String)
-    case ledZeppelin(preferredMember: String, song: String)    
+    case ledZeppelin(preferredMember: String, song: String)
 }
 
 struct FeatureFlag {

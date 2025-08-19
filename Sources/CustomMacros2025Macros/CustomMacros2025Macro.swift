@@ -137,7 +137,9 @@ public struct ConsumableExperimentMacro: MemberMacro {
 
             for element in caseDecl.elements {
                 let name = element.name.text
-                if name == "on" || name == "off" {
+                
+                if ((name.caseInsensitiveCompare("on") == .orderedSame) || (name.caseInsensitiveCompare("off") == .orderedSame)) {
+//                if name == "on" || name == "off" {
                     continue
                 }
 
@@ -198,7 +200,8 @@ public struct ConsumableExperimentMacro: MemberMacro {
             let caseToBeReturned = "ConsumableExperiment.\(caseDetails.caseName)" + associatedVariablesFullSnippet
             print(caseToBeReturned)
             
-            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseDetails.caseName)\" { return \(caseToBeReturned) }\n")
+//            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseDetails.caseName)\" { return \(caseToBeReturned) }\n")
+            longCodeSnippet.append("\(elsePrefixIfNeeded)if (variationName.caseInsensitiveCompare(\"\(caseDetails.caseName)\") == .orderedSame) { return \(caseToBeReturned) }\n")
         }
         longCodeSnippet.append((allCases.count > 0) ? "else {return nil}" : "return nil")
         
