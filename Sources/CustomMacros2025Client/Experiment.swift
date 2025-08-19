@@ -5,40 +5,34 @@
 //  Created by Anand Kumar on 8/18/25.
 //
 
+import CustomMacros2025
+
 protocol ExperimentProtocol {
     static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol?
 }
 protocol ConsumableExperimentProtocol {}
 
-enum FeatureXExperiment {
+@ConsumableExperiment
+enum FeatureXExperiment: ExperimentProtocol {
     case on
     case off
     case variationA(headerMessage: String)
     case variationB(headerMessage: String)
 }
 
-extension FeatureXExperiment : ExperimentProtocol {
-    
-    enum ConsumableExperiment: ConsumableExperimentProtocol {
-        case variationA(headerMessage: String)
-        case variationB(headerMessage: String)
-    }
-    
-    static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-        return ConsumableExperiment.variationA(headerMessage: variables["headerMessage"]!)
-    }
+@ConsumableExperiment
+enum FTUXMusicBandGreeting: ExperimentProtocol {
+    case on
+    case off
+    case theRollingStones(preferredMember: String, song: String)
+    case ledZeppelin(preferredMember: String, song: String)    
 }
 
 struct FeatureFlag {
     let key = "FeatureX.Flag1"
-//    private let variation = "variationA"
-//    private let variables = ["headerMessage" : "Welcome"]
     
-//    private let variation = "TheRollingStones"
-//    private let variables = ["preferredMember" : "Mick Jagger", "song" : "Sweet Virginia"]
-    
-    private let variation = "LedZeppelin"
-    private let variables = ["preferredMember" : "Jimmy Page", "song" : "Over the Hills and Far Away"]
+    private let variation = "theRollingStones"
+    private let variables = ["preferredMember" : "Mick Jagger", "song" : "Sweet Virginia"]
     
     func getVariation(expressedBasedOn experimentType: ExperimentProtocol.Type) -> ConsumableExperimentProtocol? {
         return experimentType.getVariation(variationName: variation, variables: variables)

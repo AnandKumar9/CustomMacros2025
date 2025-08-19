@@ -21,17 +21,10 @@ struct User {
 let userA = User(id: 1, name: "Mark", nickname: "Junior")
 print(User.CodingKeys.id)
 
-//let variation = FeatureFlag().getVariation(expressedBasedOn: FeatureXExperiment.self) as! FeatureXExperiment.ConsumableExperiment
-let variation = FeatureFlag().getVariation(expressedBasedOn: MusicBand.self) as? MusicBand.ConsumableExperiment
+print("The designated variation of \(FTUXMusicBandGreeting.self) experiment corresponds to below enum case in your code -")
+
+let variation = FeatureFlag().getVariation(expressedBasedOn: FTUXMusicBandGreeting.self) as? FTUXMusicBandGreeting.ConsumableExperiment
 print(variation ?? "nil")
-
-//let c = SampleExperiment.getVariation(variationName: "variationB", variables: ["headerMessage":"Hi"])
-
-/*
-The attached macro should
- 1. Create a nested enum skipping the cases `on` and `off`, but retaining every other case. Declare a conformance to ConsumableExperimentProtocol.
- 2. Add the static function getVariation(), along with the implementation
- */
 
 enum SampleExperiment {
     case on
@@ -49,23 +42,8 @@ enum SampleExperiment {
         case variationA(headerMessage: String)
         case variationB(headerMessage: String)
     }
-    
-//    static var retainedCaseLines: [String] {
-//        ["case variationA(headerMessage: String)",
-//         "case variationB(headerMessage: String, arg2: String)",
-//         "case variationC"]
-//    }
-    
+
     static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-        print("Inside")
-        
-//        let allCaseNames: [String] = SampleExperiment.retainedCaseLines.compactMap { caseLine in
-//            let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
-//            let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
-//            
-//            return caseName
-//        }
-//        print(allCaseNames)
         
         let allCases: [(caseName: String, associatedVariables: [String])] = SampleExperiment.retainedCaseLines.compactMap { caseLine in
             let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
@@ -108,54 +86,8 @@ enum SampleExperiment {
         print(longCodeSnippet)
         
         
-//        return ConsumableExperiment.TheRollingStones(preferredMember: (variables["preferredMember"] ?? ""), song: (variables["song"] ?? ""))
-        
-        
-//        let matchingCaseLine: String = SampleExperiment.retainedCaseLines.first(where: { $0.hasPrefix("case \(variationName)")})!
-//        print(matchingCaseLine)
-//        
-//        var argumentsBlob: String? = nil
-//        
-//        if let start = matchingCaseLine.firstIndex(of: "("),
-//           let end = matchingCaseLine.firstIndex(of: ")") {
-//            argumentsBlob = String(matchingCaseLine[matchingCaseLine.index(after: start)..<end])
-//        }
-//        
-//        print("argumentsBlob - \(argumentsBlob!)")
-//        let arguments = argumentsBlob!.split(separator: ",").flatMap { $0.split(separator: ":").first }
-//        print(arguments)
-//        let associatedDataChunks: [String] = arguments.compactMap { argument in
-//            guard let value = variables[String(argument)] else { return nil }
-//            return argument + ": \"" +  value + "\""
-//        }
-//        let associatedDataSnippet = associatedDataChunks.joined(separator: ", ")
-//        print("associatedDataSnippet - \(associatedDataSnippet)")
-//        
-//        let token = variationName + "(" + associatedDataSnippet + ")" // "\(variationName)\(\(associatedDataSnippet)\)"
-//        print(token)
-        
-        
         return ConsumableExperiment.variationA(headerMessage: variables["headerMessage"]!)
     }
 }
 
 extension SampleExperiment : ExperimentProtocol {}
-
-@ConsumableExperiment
-enum MusicBand: ExperimentProtocol {
-    case on
-    case off
-    case TheRollingStones(preferredMember: String, song: String)
-    case LedZeppelin(preferredMember: String, song: String)
-    
-//    static func test_getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-//        if variationName == "TheRollingStones" {
-//            return ConsumableExperiment.TheRollingStones(preferredMember: (variables["preferredMember"] ?? ""), song: (variables["song"] ?? ""))
-//        } else if variationName == "LedZeppelin" {
-//            return nil
-//        }
-//        return nil
-//    }
-}
-
-let n = MusicBand.TheRollingStones(preferredMember: "m", song: "n",)

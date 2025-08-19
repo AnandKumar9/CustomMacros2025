@@ -163,21 +163,6 @@ public struct ConsumableExperimentMacro: MemberMacro {
         }
         """
         
-//        let allCaseNames: [String] = retainedCaseLines.compactMap { caseLine in
-//            let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
-//            let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
-//            
-//            return caseName
-//        }
-//        print(allCaseNames)
-        
-//        var longCodeSnippet: String = ""
-//        for (index, caseName) in allCaseNames.enumerated() {
-//            let elsePrefixIfNeeded = (index > 0) ? "else ":""
-//            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseName)\" { return nil }\n")
-//        }
-//        longCodeSnippet.append((allCaseNames.count > 0) ? "else { return nil }" : "return nil")
-        
         let allCases: [(caseName: String, associatedVariables: [String])] = retainedCaseLines.compactMap { caseLine in
             let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
             let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
@@ -221,7 +206,7 @@ public struct ConsumableExperimentMacro: MemberMacro {
         let staticFuncSource =
         """
         static func getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-            // Hi there - \(retainedCaseLines)
+            // Use this for debugging - \(retainedCaseLines)
             \(longCodeSnippet)
         }
         """
