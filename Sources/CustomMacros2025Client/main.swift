@@ -21,10 +21,11 @@ struct User {
 let userA = User(id: 1, name: "Mark", nickname: "Junior")
 print(User.CodingKeys.id)
 
-let variation = FeatureFlag().getVariation(expressedBasedOn: FeatureXExperiment.self) as! FeatureXExperiment.ConsumableExperiment
-print(variation)
+//let variation = FeatureFlag().getVariation(expressedBasedOn: FeatureXExperiment.self) as! FeatureXExperiment.ConsumableExperiment
+let variation = FeatureFlag().getVariation(expressedBasedOn: MusicBand.self) as? MusicBand.ConsumableExperiment
+print(variation ?? "nil")
 
-let c = SampleExperiment.getVariation(variationName: "variationB", variables: ["headerMessage":"Hi"])
+//let c = SampleExperiment.getVariation(variationName: "variationB", variables: ["headerMessage":"Hi"])
 
 /*
 The attached macro should
@@ -91,18 +92,19 @@ enum SampleExperiment {
             let elsePrefixIfNeeded = (index > 0) ? "else ":""
             
             let associatedVariablesArray: [String] = caseDetails.associatedVariables.map { associatedVariable in
-                return "\(associatedVariable): (variables[\"\(associatedVariable)\"] ?? \"\")"
+                let trimmedVariable = associatedVariable.trimmingCharacters(in: .whitespaces)
+                return "\(trimmedVariable): (variables[\"\(trimmedVariable)\"] ?? \"\")"
             }
             let associatedVariablesString = associatedVariablesArray.joined(separator: ", ")
             let associatedVariablesFullSnippet = (!associatedVariablesString.isEmpty) ? "(\(associatedVariablesString))" : ""
             
 
-            let caseToBeReturned = " ConsumableExperiment.\(caseDetails.caseName)" + associatedVariablesFullSnippet
+            let caseToBeReturned = "ConsumableExperiment.\(caseDetails.caseName)" + associatedVariablesFullSnippet
             print(caseToBeReturned)
             
             longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseDetails.caseName)\" { return \(caseToBeReturned) }\n")
         }
-        longCodeSnippet.append((allCases.count > 0) ? "else \n{return nil}" : "return nil")
+        longCodeSnippet.append((allCases.count > 0) ? "else {return nil}" : "return nil")
         print(longCodeSnippet)
         
         
@@ -140,20 +142,20 @@ enum SampleExperiment {
 extension SampleExperiment : ExperimentProtocol {}
 
 @ConsumableExperiment
-enum MusicBand {
+enum MusicBand: ExperimentProtocol {
     case on
     case off
     case TheRollingStones(preferredMember: String, song: String)
     case LedZeppelin(preferredMember: String, song: String)
     
-    static func test_getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
-        if variationName == "TheRollingStones" {
-            return ConsumableExperiment.TheRollingStones(preferredMember: (variables["preferredMember"] ?? ""), song: (variables["song"] ?? ""))
-        } else if variationName == "LedZeppelin" {
-            return nil
-        }
-        return nil
-    }
+//    static func test_getVariation(variationName: String, variables: [String: String]) -> ConsumableExperimentProtocol? {
+//        if variationName == "TheRollingStones" {
+//            return ConsumableExperiment.TheRollingStones(preferredMember: (variables["preferredMember"] ?? ""), song: (variables["song"] ?? ""))
+//        } else if variationName == "LedZeppelin" {
+//            return nil
+//        }
+//        return nil
+//    }
 }
 
 let n = MusicBand.TheRollingStones(preferredMember: "m", song: "n",)

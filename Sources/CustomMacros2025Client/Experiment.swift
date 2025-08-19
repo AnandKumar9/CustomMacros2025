@@ -31,8 +31,14 @@ extension FeatureXExperiment : ExperimentProtocol {
 
 struct FeatureFlag {
     let key = "FeatureX.Flag1"
-    private let variation = "variationA"
-    private let variables = ["headerMessage" : "Welcome"]
+//    private let variation = "variationA"
+//    private let variables = ["headerMessage" : "Welcome"]
+    
+//    private let variation = "TheRollingStones"
+//    private let variables = ["preferredMember" : "Mick Jagger", "song" : "Sweet Virginia"]
+    
+    private let variation = "LedZeppelin"
+    private let variables = ["preferredMember" : "Jimmy Page", "song" : "Over the Hills and Far Away"]
     
     func getVariation(expressedBasedOn experimentType: ExperimentProtocol.Type) -> ConsumableExperimentProtocol? {
         return experimentType.getVariation(variationName: variation, variables: variables)

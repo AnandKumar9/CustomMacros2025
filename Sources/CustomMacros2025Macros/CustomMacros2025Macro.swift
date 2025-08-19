@@ -163,20 +163,59 @@ public struct ConsumableExperimentMacro: MemberMacro {
         }
         """
         
-        let allCaseNames: [String] = retainedCaseLines.compactMap { caseLine in
+//        let allCaseNames: [String] = retainedCaseLines.compactMap { caseLine in
+//            let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
+//            let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
+//            
+//            return caseName
+//        }
+//        print(allCaseNames)
+        
+//        var longCodeSnippet: String = ""
+//        for (index, caseName) in allCaseNames.enumerated() {
+//            let elsePrefixIfNeeded = (index > 0) ? "else ":""
+//            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseName)\" { return nil }\n")
+//        }
+//        longCodeSnippet.append((allCaseNames.count > 0) ? "else { return nil }" : "return nil")
+        
+        let allCases: [(caseName: String, associatedVariables: [String])] = retainedCaseLines.compactMap { caseLine in
             let caseLineWithoutCaseKeyword = caseLine.replacingOccurrences(of: "case ", with: "")
             let caseName = caseLineWithoutCaseKeyword.split(separator: "(").first?.trimmingCharacters(in: .whitespaces)
             
-            return caseName
+            guard let caseName else { return nil }
+            
+            var argumentsBlob: String? = nil
+            
+            if let start = caseLine.firstIndex(of: "("),
+               let end = caseLine.firstIndex(of: ")") {
+                argumentsBlob = String(caseLine[caseLine.index(after: start)..<end])
+            }
+            
+            guard let argumentsBlob else { return (caseName: caseName, associatedVariables: []) }
+            
+            let arguments: [String] = argumentsBlob.split(separator: ",").compactMap { ($0.split(separator: ":").first) }.map { String($0) }
+            
+            return (caseName: caseName, associatedVariables: arguments)
         }
-        print(allCaseNames)
         
         var longCodeSnippet: String = ""
-        for (index, caseName) in allCaseNames.enumerated() {
+        for (index, caseDetails) in allCases.enumerated() {
             let elsePrefixIfNeeded = (index > 0) ? "else ":""
-            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseName)\" { return nil }\n")
+            
+            let associatedVariablesArray: [String] = caseDetails.associatedVariables.map { associatedVariable in
+                let trimmedVariable = associatedVariable.trimmingCharacters(in: .whitespaces)
+                return "\(trimmedVariable): (variables[\"\(trimmedVariable)\"] ?? \"\")"
+            }
+            let associatedVariablesString = associatedVariablesArray.joined(separator: ", ")
+            let associatedVariablesFullSnippet = (!associatedVariablesString.isEmpty) ? "(\(associatedVariablesString))" : ""
+            
+
+            let caseToBeReturned = "ConsumableExperiment.\(caseDetails.caseName)" + associatedVariablesFullSnippet
+            print(caseToBeReturned)
+            
+            longCodeSnippet.append("\(elsePrefixIfNeeded)if variationName == \"\(caseDetails.caseName)\" { return \(caseToBeReturned) }\n")
         }
-        longCodeSnippet.append((allCaseNames.count > 0) ? "else { return nil }" : "return nil")
+        longCodeSnippet.append((allCases.count > 0) ? "else {return nil}" : "return nil")
         
         // Static function we inject on the host enum (stub as requested).
         let staticFuncSource =
